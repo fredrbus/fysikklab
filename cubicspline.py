@@ -25,19 +25,18 @@ from scipy.interpolate import CubicSpline
 # xfast = np.asarray([-2.373E-2, 0.175, 0.373, 0.569,
 #                    0.768, 0.969, 1.171, 1.370])
 
-f = open('tracked_data/y_fast.txt')
+f_av_x = open('tracked_data/y_fast.txt')
 x_arr = []
 y_arr = []
-for line in f.readlines()[2:]:
+for line in f_av_x.readlines()[2:]:
     x, y = line[:-1].split('\t')
     x_arr.append(float(x))
     y_arr.append(float(y))
-f.close()
+f_av_x.close()
 x_0 = x_arr[0]
 x_arr_adjusted = []
 for x in x_arr:
     x_arr_adjusted.append(x - x_0)
-print(x_arr)
 xfast = np.asarray(x_arr_adjusted)
 yfast = np.asarray(y_arr)
 
@@ -73,108 +72,141 @@ d2y = cs(x, 2)  # d2y=tabell med 1401 verdier for y''(x)
 g = 9.81
 c = 2/5
 M = 0.031
-def v(x):
+
+
+def v_av_x(x):
     return np.sqrt(((2*g)*(cs(0)-cs(x)))/(1+c))
-def k(x):
-    return cs(x,2)/((1+(cs(x,1)**2))**(3/2))
-
-def n(x):
-    return M*(g*np.cos(beta(x))+a_sentripetal(x))
-def a_sentripetal(x):
-    return (v(x)**2)*k(x)
 
 
-def beta(x):
-    return np.arctan(cs(x,1))
+def k_av_x(x):
+    return cs(x, 2)/((1+(cs(x, 1)**2))**(3/2))
 
-def a(x):
-    return -((5*g*np.sin(beta(x)))/7)
 
-def f(x):
-    return (2*M*g*np.sin(beta(x)))/7
+def n_av_x(x):
+    return M*(g*np.cos(beta_av_x(x))+a_sentripetal_av_x(x))
+
+
+def a_sentripetal_av_x(x):
+    return (v_av_x(x)**2)*k_av_x(x)
+
+
+def beta_av_x(x):
+    return np.arctan(cs(x, 1))
+
+
+def a_av_x(x):
+    return -((5*g*np.sin(beta_av_x(x)))/7)
+
+
+def f_av_x(x):
+    return (2*M*g*np.sin(beta_av_x(x)))/7
+
 
 def forward_euler_v(t):
     if t == 0:
         return 0
     return forward_euler_v
 
+
 def forward_euler_x(t):
     if t == 0:
         return 0
 
 
-# Plotteeksempel: Banen y(x)
-baneform = plt.figure('y(x)',figsize=(12,6))
-plt.plot(x, y, xfast, yfast, '*')
-plt.title('Banen')
-plt.xlabel('x (m)',fontsize=20)
-plt.ylabel('y(x) (m)',fontsize=20)
-plt.grid()
-plt.show()   
-
-# Plotteeksempel: Kulens hastighet v(x)
-baneform = plt.figure('y(x)',figsize=(12,6))
-plt.plot(x,v(x))
-plt.title('Kulens hastighet')
-plt.xlabel('$x$ (m)',fontsize=20)
-plt.ylabel('$v$ (m/s)',fontsize=20)
-plt.grid()
-plt.show()
+# Tidsutvikling
+v_x = list(map(v_av_x, x))
+t_n = [0]
+t = 0
+for n in range(1, len(x)):
+    dx = x[n] - x[n-1]
+    v_x1_x2 = v_x[n-1] + v_x[n]
+    dt = 2*dx / v_x1_x2
+    t_n.append((dt + t))
+    t += dt
 
 
-# Plotteeksempel: Kulens sentripetalakselerasjonen a(x)
-baneform = plt.figure('y(x)',figsize=(12,6))
-plt.plot(x,a_sentripetal(x))
-plt.title('Kulens sentripetalakselerasjonen')
-plt.xlabel('$x$ (m)',fontsize=20)
-plt.ylabel('$a(x)$ (m/s^2)',fontsize=20)
-plt.grid()
-plt.show()
+def x_av_t(t):
+    for n in range(0, len(t_n)):
+        if t < t_n[n]:
+            return x[n]
+    return -1
 
 
-# Plot Beta
-baneform = plt.figure('y(x)',figsize=(12,6))
-plt.plot(x,beta(x))
-plt.title('Beta')
-plt.xlabel('x(m)',fontsize=20)
-plt.ylabel('β (radianer)',fontsize=20)
-plt.grid()
-plt.show()
+print(np.asarray(t_n))
+print(x_av_t(.4))
 
-#Plot krumning
-baneform = plt.figure('y(x)',figsize=(12,6))
-plt.plot(x,k(x))
-plt.title('Banens krumning')
-plt.xlabel('x (m)',fontsize=20)
-plt.ylabel('k(x) (1/m)',fontsize=20)
-plt.grid()
-plt.show()
+# # Plotteeksempel: Banen y(x)
+# baneform = plt.figure('y(x)', figsize=(12, 6))
+# plt.plot(x, y, xfast, yfast, '*')
+# plt.title('Banen')
+# plt.xlabel('x (m)', fontsize=20)
+# plt.ylabel('y(x) (m)', fontsize=20)
+# plt.grid()
+# plt.show()
 
-
-#Plot normalkraft
-baneform = plt.figure('y(x)',figsize=(12,6))
-plt.plot(x,n(x))
-plt.title('Normalkraft')
-plt.xlabel('x (m)',fontsize=20)
-plt.ylabel('N/Mg',fontsize=20)
-plt.grid()
-plt.show()
-
-#Plot Forholdet mellom f og N
-baneform = plt.figure('y(x)',figsize=(12,6))
-plt.plot(x,abs(f(x)/n(x)))
-plt.title('Forholdet mellom f og n')
-plt.xlabel('x (m)',fontsize=20)
-plt.ylabel('|f/N|',fontsize=20)
-plt.grid()
-plt.show()
+# # Plotteeksempel: Kulens hastighet v(x)
+# baneform = plt.figure('y(x)', figsize=(12, 6))
+# plt.plot(x, v_av_x(x))
+# plt.title('Kulens hastighet')
+# plt.xlabel('$x$ (m)', fontsize=20)
+# plt.ylabel('$v$ (m/s)', fontsize=20)
+# plt.grid()
+# plt.show()
 
 
-# Plot a
-baneform = plt.figure('y(x)',figsize=(12,6))
-plt.plot(x,a(x))
-plt.title('Kulens akselerasjon')
-plt.xlabel('x (m)',fontsize=20)
-plt.ylabel('$a(x)$ (m/s^2)',fontsize=20)
-plt.grid()
-plt.show()
+# # Plotteeksempel: Kulens sentripetalakselerasjonen a(x)
+# baneform = plt.figure('y(x)', figsize=(12, 6))
+# plt.plot(x, a_sentripetal_av_x(x))
+# plt.title('Kulens sentripetalakselerasjonen')
+# plt.xlabel('$x$ (m)', fontsize=20)
+# plt.ylabel('$a(x)$ (m/s^2)', fontsize=20)
+# plt.grid()
+# plt.show()
+
+
+# # Plot Beta
+# baneform = plt.figure('y(x)', figsize=(12, 6))
+# plt.plot(x, beta_av_x(x))
+# plt.title('Beta')
+# plt.xlabel('x(m)', fontsize=20)
+# plt.ylabel('β (radianer)', fontsize=20)
+# plt.grid()
+# plt.show()
+
+# # Plot krumning
+# baneform = plt.figure('y(x)', figsize=(12, 6))
+# plt.plot(x, k_av_x(x))
+# plt.title('Banens krumning')
+# plt.xlabel('x (m)', fontsize=20)
+# plt.ylabel('k(x) (1/m)', fontsize=20)
+# plt.grid()
+# plt.show()
+
+
+# # Plot normalkraft
+# baneform = plt.figure('y(x)', figsize=(12, 6))
+# plt.plot(x, n_av_x(x))
+# plt.title('Normalkraft')
+# plt.xlabel('x (m)', fontsize=20)
+# plt.ylabel('N/Mg', fontsize=20)
+# plt.grid()
+# plt.show()
+
+# # Plot Forholdet mellom f og N
+# baneform = plt.figure('y(x)', figsize=(12, 6))
+# plt.plot(x, abs(f_av_x(x)/n_av_x(x)))
+# plt.title('Forholdet mellom f og n')
+# plt.xlabel('x (m)', fontsize=20)
+# plt.ylabel('|f/N|', fontsize=20)
+# plt.grid()
+# plt.show()
+
+
+# # Plot a
+# baneform = plt.figure('y(x)', figsize=(12, 6))
+# plt.plot(x, a_av_x(x))
+# plt.title('Kulens akselerasjon')
+# plt.xlabel('x (m)', fontsize=20)
+# plt.ylabel('$a(x)$ (m/s^2)', fontsize=20)
+# plt.grid()
+# plt.show()
