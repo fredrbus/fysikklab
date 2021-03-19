@@ -125,15 +125,11 @@ for n in range(1, len(x)):
     t += dt
 
 
+cs_t = CubicSpline(t_n, x, bc_type='natural')
+
+
 def x_av_t(t):
-    for n in range(0, len(t_n)):
-        if t < t_n[n]:
-            return x[n]
-    return -1
-
-
-print(np.asarray(t_n))
-print(x_av_t(.4))
+    return cs_t(t)
 
 # # Plotteeksempel: Banen y(x)
 # baneform = plt.figure('y(x)', figsize=(12, 6))
