@@ -131,6 +131,7 @@ cs_t = CubicSpline(t_n, x, bc_type='natural')
 def x_av_t(t):
     return cs_t(t)
 
+
 # # Plotteeksempel: Banen y(x)
 # baneform = plt.figure('y(x)', figsize=(12, 6))
 # plt.plot(x, y, xfast, yfast, '*')
