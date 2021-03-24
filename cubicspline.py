@@ -94,6 +94,10 @@ def beta_av_x(x):
     return np.arctan(cs(x, 1))
 
 
+def v_x_av_x(x):
+    return v_av_x(x)*np.cos(np.cos(cs()))
+
+
 def a_av_x(x):
     return -((5*g*np.sin(beta_av_x(x)))/7)
 
@@ -119,7 +123,8 @@ t_n = [0]
 t = 0
 for n in range(1, len(x)):
     dx = x[n] - x[n-1]
-    v_x1_x2 = v_x[n-1] + v_x[n]
+    v_x1_x2 = v_x[n-1]*np.cos(beta_av_x(x[n-1])) + \
+        v_x[n]*np.cos(beta_av_x(x[n]))
     dt = 2*dx / v_x1_x2
     t_n.append((dt + t))
     t += dt
@@ -131,6 +136,8 @@ cs_t = CubicSpline(t_n, x, bc_type='natural')
 def x_av_t(t):
     return cs_t(t)
 
+
+print(t_n[-1])
 
 # # Plotteeksempel: Banen y(x)
 # baneform = plt.figure('y(x)', figsize=(12, 6))
@@ -169,6 +176,7 @@ def x_av_t(t):
 # plt.ylabel('β (radianer)', fontsize=20)
 # plt.grid()
 # plt.show()
+
 
 # # Plot krumning
 # baneform = plt.figure('y(x)', figsize=(12, 6))

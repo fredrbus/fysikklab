@@ -23,7 +23,7 @@ sluttfarter_sd = np.std(verdier)
 
 sluttfarter_varians = np.var(verdier)
 
-print("\nKule \t\t Sluttfart")
+print("\nForsøk \t\t Sluttfart")
 print("-"*27)
 for n in range(1, 11):
     print(str(n) + " \t\t " + str(sluttfarter["forsøk " + str(n)]))
