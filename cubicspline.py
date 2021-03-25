@@ -18,9 +18,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import CubicSpline
+from scipy.optimize import curve_fit
+
 
 # Horisontal avstand mellom festepunktene er 0.200 m
-#h = 0.200
+# h = 0.200
 # xfast=np.asarray([0,h,2*h,3*h,4*h,5*h,6*h,7*h])
 # xfast = np.asarray([-2.373E-2, 0.175, 0.373, 0.569,
 #                    0.768, 0.969, 1.171, 1.370])
@@ -40,10 +42,39 @@ for x in x_arr:
 xfast = np.asarray(x_arr_adjusted)
 yfast = np.asarray(y_arr)
 
+for n in range(0, len(xfast)):
+    print(str(np.round((xfast[n]), 3)) + " & " + str(np.round((yfast[n]), 3)))
+
+
+# def realverdier():
+#     t_vals = []
+#     x_vals = [0 for x in range(0, 37)]
+#     for n in range(1, 11):
+#         path = "./tracked_data/txy_" + str(n) + ".txt"
+#         f = open(path)
+#         i = 0
+#         for ln in f.readlines()[2:]:
+#             if n < 2:
+#                 t_vals.append(np.round(float(ln.split('\t')[0]), 3))
+#             print(ln.split('\t'))
+#             x_vals[i] += np.round(float(ln.split('\t')[1]), 3)
+#             i += 1
+#         f.close()
+#     x_vals_mean = list(map(lambda x: x/10, x_vals))
+#     x_vals_mean_adjusted = list(
+#         map(lambda x: np.round(x - x_vals_mean[0], 3), x_vals_mean))
+#     return x_vals_mean_adjusted, t_vals
+
+
+# x_real, t_real = realverdier()
+
+# print(x_real)
+# print(t_real)
+
 
 # Skriv inn y-verdiene til banens 8 festepunkter i tabellen yfast.
 # Et vilkaarlig eksempel:
-#yfast = np.asarray([0.391, 0.295, 0.272, 0.233, 0.130, 0.103, 0.182, 0.204])
+# yfast = np.asarray([0.391, 0.295, 0.272, 0.233, 0.130, 0.103, 0.182, 0.204])
 # Erstatt med egne tallverdier avlest i tracker.
 # Programmet beregner de 7 tredjegradspolynomene, et
 # for hvert intervall mellom to festepunkter,
@@ -139,6 +170,54 @@ def x_av_t(t):
 
 print(t_n[-1])
 
+sluttfarter = []
+
+t_real = [0 for x in range(0, 36)]
+x_real = [0 for x in range(0, 36)]
+y_real = [0 for x in range(0, 36)]
+for n in range(1, 11):
+    path = "./tracked_data/txy_" + str(n) + ".txt"
+    f = open(path)
+    lines = f.readlines()
+    t0, x0, y0 = [float(p) for p in lines[2].split('\t')]
+    t_real_l = []
+    x_real_l = []
+    y_real_l = []
+    for i in range(2, len(lines)):
+        t_real[i-2] += float(lines[i].split('\t')[0]) - t0
+        x_real[i-2] += float(lines[i].split('\t')[1]) - x0
+        y_real[i-2] += float(lines[i].split('\t')[2]) - y0
+        t_real_l.append(float(lines[i].split('\t')[0]) - t0)
+        x_real_l.append(float(lines[i].split('\t')[1]) - x0)
+        y_real_l.append(float(lines[i].split('\t')[2]) - y0)
+    print(t_real_l)
+    print(t_real_l)
+    csr_l_x = CubicSpline(t_real_l, x_real_l)
+    csr_l_y = CubicSpline(t_real_l, y_real_l)
+    der_x_l = csr_l_x.derivative()
+    der_y_l = csr_l_y.derivative()
+    sluttfarter.append(np.sqrt(csr_l_x(t_n[-1])**2+csr_l_y(t_n[-1])**2))
+    f.close()
+
+t_real = [t/10 for t in t_real]
+x_real = [x/10 for x in x_real]
+y_real = [y/10 for y in y_real]
+
+print('')
+print('')
+print(sluttfarter)
+print('')
+print('')
+csrx = CubicSpline(t_real, x_real)
+csry = CubicSpline(t_real, y_real)
+
+
+def v_real(t):
+    der_x = csrx.derivative()
+    der_y = csry.derivative()
+    return np.sqrt(der_x(t)**2+der_y(t)**2)
+
+
 # # Plotteeksempel: Banen y(x)
 # baneform = plt.figure('y(x)', figsize=(12, 6))
 # plt.plot(x, y, xfast, yfast, '*')
@@ -147,15 +226,15 @@ print(t_n[-1])
 # plt.ylabel('y(x) (m)', fontsize=20)
 # plt.grid()
 # plt.show()
-
-# # Plotteeksempel: Kulens hastighet v(x)
-# baneform = plt.figure('y(x)', figsize=(12, 6))
-# plt.plot(x, v_av_x(x))
-# plt.title('Kulens hastighet')
-# plt.xlabel('$x$ (m)', fontsize=20)
-# plt.ylabel('$v$ (m/s)', fontsize=20)
-# plt.grid()
-# plt.show()
+# Plotteeksempel: Kulens hastighet v(x)
+baneform = plt.figure('y(x)', figsize=(12, 6))
+plt.plot(x_av_t(t_n), v_av_x(x_av_t(t_n)))
+plt.plot(csrx(t_n), v_real(t_n))
+plt.title('Kulens hastighet')
+plt.xlabel('$x$ (m)', fontsize=20)
+plt.ylabel('$v$ (m/s)', fontsize=20)
+plt.grid()
+plt.show()
 
 
 # # Plotteeksempel: Kulens sentripetalakselerasjonen a(x)
@@ -215,3 +294,43 @@ print(t_n[-1])
 # plt.ylabel('$a(x)$ (m/s^2)', fontsize=20)
 # plt.grid()
 # plt.show()
+
+# Plot x av t
+baneform = plt.figure('y(x)', figsize=(12, 6))
+plt.plot(t_n, x_av_t(t_n))
+plt.plot(t_n, csrx(t_n))
+plt.title('Kulens x-posisjon')
+plt.xlabel('t (s)', fontsize=20)
+plt.ylabel('$x$ (m)', fontsize=20)
+plt.grid()
+plt.show()
+
+# print("Beregnet: ")
+# print(v_av_x(x[-1]))
+# print("Målt: ")
+# print(np.mean(sluttfarter))
+# print("Diff: ")
+# print(np.mean(sluttfarter)/v_av_x(x[-1]))
+
+sluttfarter_snitt = np.mean(sluttfarter)
+
+sluttfarter_sd = np.std(sluttfarter)
+sluttfarter_sd = np.std(sluttfarter)
+
+sluttfarter_varians = np.var(sluttfarter)
+
+print("\nForsøk \t\t Sluttfart")
+print("-"*27)
+for n in range(1, 11):
+    print(str(n) + " \t\t " + str(np.round(sluttfarter[n-1], 3)))
+
+
+print("")
+print("Snittfart:" + "\t" + str(sluttfarter_snitt))
+print("Standardavvik:" + "\t" + str(sluttfarter_sd))
+print("Varians:" + "\t" + str(sluttfarter_varians))
+print("Standardfeil:" + "\t" + str(np.round(np.sqrt(sluttfarter_varians /
+      len(sluttfarter))*100 / sluttfarter_snitt, 3)) + "%")
+print("Beregnet fart:" + "\t" + str(np.round(v_av_x(x[-1]), 3)))
+print("Avvik:" + "\t\t" +
+      str(np.round((np.mean(sluttfarter)/v_av_x(x[-1])-1)*100, 3)) + "%")
