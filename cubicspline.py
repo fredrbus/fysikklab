@@ -18,6 +18,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import CubicSpline
+from scipy import integrate
 from scipy.optimize import curve_fit
 
 
@@ -202,6 +203,16 @@ for n in range(1, 11):
 t_real = [t/10 for t in t_real]
 x_real = [x/10 for x in x_real]
 y_real = [y/10 for y in y_real]
+print("!!!")
+print(x_real)
+v_r = [0]
+for i in range(1, 36):
+    dx = x_real[i] - x_real[i-1]
+    dy = y_real[i] - y_real[i-1]
+    dt = t_real[i] - t_real[i-1]
+    ds = np.sqrt(dx*dx + dy*dy)
+    v_r.append(ds / dt)
+
 
 print('')
 print('')
@@ -223,6 +234,7 @@ def a_real(t):
     der_y = csry.derivative(2)
     return np.sqrt(der_x(t)**2+der_y(t)**2)
 
+
     # # Plotteeksempel: Banen y(x)
     # baneform = plt.figure('y(x)', figsize=(12, 6))
     # plt.plot(x, y, xfast, yfast, '*')
@@ -234,13 +246,23 @@ def a_real(t):
     # Plotteeksempel: Kulens hastighet v(x)
 baneform = plt.figure('y(x)', figsize=(12, 6))
 plt.plot(x_av_t(t_n), v_av_x(x_av_t(t_n)))
-plt.plot(csrx(t_n), v_real(t_n))
-plt.title('Kulens hastighet')
+plt.plot(x_real, v_r)
+#plt.title('Kulens hastighet')
 plt.xlabel('$x$ (m)', fontsize=20)
 plt.ylabel('$v$ (m/s)', fontsize=20)
 plt.grid()
 plt.show()
 
+
+def F_d(v):
+    C_d = .47
+    p = 1.29
+    A = np.pi * ((0.0196 / 2) ** 2)
+    return .5 * C_d * p * A * v**2
+
+
+def F_d_x(x):
+    return F_d(v_av_x(x))
 
 # # Plotteeksempel: Kulens sentripetalakselerasjonen a(x)
 # baneform = plt.figure('y(x)', figsize=(12, 6))
@@ -339,3 +361,7 @@ print("Standardfeil:" + "\t" + str(np.round(np.sqrt(sluttfarter_varians /
 print("Beregnet fart:" + "\t" + str(np.round(v_av_x(x[-1]), 3)))
 print("Avvik:" + "\t\t" +
       str(np.round((np.mean(sluttfarter)/v_av_x(x[-1])-1)*100, 3)) + "%")
+
+_sum_F_D = integrate.quad(lambda x: F_d_x(x), 0, x_arr_adjusted[-1])
+print(_sum_F_D)
+print(F_d(1.42)*1.2)

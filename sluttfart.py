@@ -33,5 +33,6 @@ print("")
 print("Snittfart:" + "\t" + str(sluttfarter_snitt))
 print("Standardavvik:" + "\t" + str(sluttfarter_sd))
 print("Varians:" + "\t" + str(sluttfarter_varians))
+print("Standardfeil:" + "\t" + str(math.sqrt(sluttfarter_varians/10)))
 
 f.close()
